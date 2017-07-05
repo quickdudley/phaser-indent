@@ -17,7 +17,7 @@ import Unsafe.Coerce -- Useful here only because ImpredicativeTypes is
   -- imperfectly implemented in GHC
 
 import Codec.Phaser.Core
-import Codec.Phaser.Common(Position(..))
+import Codec.Phaser.Common(Position(..),char,munch,munch1)
 
 -- | A type for indentation aware parsers
 newtype IndentPhase a = IndentPhase (
