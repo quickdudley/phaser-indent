@@ -1,4 +1,4 @@
-{-# LANGUAGE RankNTypes,ImpredicativeTypes,NoMonomorphismRestriction #-}
+{-# LANGUAGE RankNTypes,NoMonomorphismRestriction #-}
 module Codec.Phaser.Indent (
   IndentPhase,
   liftPhase,
@@ -9,6 +9,7 @@ module Codec.Phaser.Indent (
  ) where
 
 import Data.Char
+import Data.Void
 
 import Control.Applicative
 import Control.Monad
@@ -21,7 +22,7 @@ import Codec.Phaser.Common(Position(..),char,munch,munch1)
 
 -- | A type for indentation aware parsers
 newtype IndentPhase a = IndentPhase (
-  forall o . Phase Position Char o () -> Phase Position Char o a
+  Phase Position Char Void () -> Phase Position Char Void a
  )
 
 instance Functor IndentPhase where
@@ -51,20 +52,20 @@ instance MonadPlus IndentPhase where
   mplus = (<|>)
 
 -- | Runs a 'Phase' within an 'IndentPhase'
-liftPhase :: (forall o . Phase Position Char o a) -> IndentPhase a
+liftPhase :: (Phase Position Char Void a) -> IndentPhase a
 liftPhase p = IndentPhase (\_ -> p)
 
 -- | Turns an 'IndentPhase' into a 'Phase'
-runIndentPhase :: IndentPhase a -> Phase Position Char o a
+runIndentPhase :: IndentPhase a -> Phase Position Char Void a
 runIndentPhase (IndentPhase a) = a (return ())
 
 -- | Gets a 'Phase' which consumes the indentation of the current block
-currentIndent :: IndentPhase (forall o . Phase Position Char o ())
-currentIndent = IndentPhase (\i -> pure (unsafeCoerce i))
+currentIndent :: IndentPhase (Phase Position Char Void ())
+currentIndent = IndentPhase (\i -> pure i)
 
 -- | Runs the first argument, then uses the returned 'Phase' to consume the
 -- indentation for the second argument.
-blockWith :: (IndentPhase (forall o . Phase Position Char o ())) ->
+blockWith :: (IndentPhase (Phase Position Char Void ())) ->
   IndentPhase a -> IndentPhase a
 blockWith r (IndentPhase b) = r >>= \i -> IndentPhase (\_ -> b i)
 
